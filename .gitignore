@@ -1,0 +1,40 @@
+# Arquivos e pastas do ambiente virtual
+.venv/
+env/
+venv/
+ENV/
+
+# Arquivos de compilação e cache do Python
+__pycache__/
+*.py[cod]
+
+# Arquivos de configuração do IDE
+.vscode/
+.idea/
+
+# Arquivos do sistema operacional
+.DS_Store       # macOS
+Thumbs.db       # Windows
+
+# Arquivos do PyInstaller
+*.spec
+
+# Arquivos de distribuição do pacote
+*.egg-info/
+dist/
+build/
+
+Pipfile.lock
+poetry.lock
+
+# Arquivos de logs
+*.log
+
+# Arquivos temporários
+*.bak
+*.swp
+
+# Outros arquivos desnecessários (configuração específica do projeto)
+*.env
+
+teste.py
