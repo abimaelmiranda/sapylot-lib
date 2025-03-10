@@ -24,6 +24,7 @@ Thumbs.db       # Windows
 dist/
 build/
 
+# Arquivo de lock do pip (não deve ser versionado, a menos que queira fixar as dependências)
 Pipfile.lock
 poetry.lock
 
