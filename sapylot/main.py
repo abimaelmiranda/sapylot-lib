@@ -1,31 +1,52 @@
 import subprocess
 import time
+from typing import Type, TypeVar, cast
+from pywintypes import com_error
 import win32com.client
 import psutil
 
-from .exceptions import ElementNotFoundException
+from .elements import Element
 
 
-def connect(ambiente: str):
+def get_sapgui_session() -> win32com.client.CDispatch | None:
+        """
+        Função para obter o SAPgui
+        Esta função coleta a ultima sessão ativa do SAP, caso não exista, utilize a função login()
+        """
+        try:
+            sap_gui = win32com.client.GetObject("SAPGUI").GetScriptingEngine
+            conn = sap_gui.Connections(0)
+            sessions = conn.Sessions.Count - 1
+            session = conn.Sessions(sessions)
+            return session
+        except com_error:
+            return None
+
+
+def login(ambiente: str, mandante: str, idioma: str, username:str, password: str) -> win32com.client.CDispatch | None:
     """
-    Inicia o SAP GUI instalado na maquina a partir do caminho padrão C:\\Program Files (x86)\\SAP\\FrontEnd\\SAPgui\\saplogon.exe
+    Inicia o SAP GUI instalado na maquina a partir do caminho padrão 'C:\\Program Files (x86)\\SAP\\FrontEnd\\SAPgui\\sapshcut.exe'
 
     Args:
         ambiente(str): Ambiente a ser iniciado no SAP GUI
+        mandante(str): Mandante do ambiente
+        idioma(str): Idioma do ambiente
+        username(str): Usuario utilizado para login neste ambiente
+        password(str): Senha utilizada para login neste ambiente
     
     Retorna:
         Session: Retorna uma session usada para manipular a interface do SAP Gui.
     """
-    path = r"C:\Program Files (x86)\SAP\FrontEnd\SAPgui\saplogon.exe"
-    subprocess.Popen(path)
-    time.sleep(5)
-    SapGuiAuto = win32com.client.GetObject("SAPGUI")
-    application = SapGuiAuto.GetScriptingEngine
-    conn = application.OpenConnection(rf"{ambiente}", True)
+    APP_PATH = 'C:\\Program Files (x86)\\SAP\\FrontEnd\\SAPgui\\sapshcut.exe'
+    
 
-    session = conn.Children(0)
-    session.findById("wnd[0]").maximize
+    processo = subprocess.Popen([APP_PATH , f'-system={ambiente}', f'-client={mandante}', f'-user={username}', f'-pw={password}', f'-language={idioma}'])
+    processo.communicate()
+
+    time.sleep(5)
+    session = get_sapgui_session() 
     return session
+
 
 
 def closeSAPProcess():
@@ -41,117 +62,57 @@ def closeSAPProcess():
             pass
 
 
-def login(session, user: str, passw: str):
-    """
-    Realiza o login no ambiente selecionado
-
-    Args:
-        session(session): Sessão de referencia retornada pela função connect
-        user(str): Usuário do ambiente SAP informado
-        passw(str):  Usuário do ambiente SAP informado na função connect
-    """
-    session.findById("wnd[0]/usr/txtRSYST-BNAME").text = user
-    session.findById("wnd[0]/usr/pwdRSYST-BCODE").text = passw
-    session.findById("wnd[0]").sendVKey(0)
-    return
-
-
-def startTransaction(session, transaction: str):
+def start_transaction(session: win32com.client.CDispatch, transaction: str):
     """
     Inicia uma transação com a função /n
 
     Args:
-        session(session): Sessão de referencia retornada pela função connect
+        session(session): Sessão de referencia retornada pela função login ou get_sapgui_session
         transaction(str): Transação a ser iniciada
     """
     session.findById("wnd[0]/tbar[0]/okcd").text = f"/n{transaction}"
     session.findById("wnd[0]").sendVKey(0)
     return
 
-
-class Element:
-    def __init__(self, session, elementId: str):
-        self.session = session
-        self.elementId = elementId
-        self.rawElement = None
-
-    def find(self):
-        """
-        Busca o elemento e retorna o próprio objeto Element, permitindo encadeamento
-        """
-        try:
-            self.rawElement = self.session.findById(rf"{self.elementId}")
-        except Exception as e:
-            raise ElementNotFoundException(self.elementId) from e
-        return self
-
-    def getText(self):
-        """
-        Retorna o texto do elemento encontrado
-        """
-        if self.rawElement:
-            return self.rawElement.text.strip()
-        return None
-
-    def setText(self, text: str):
-        """
-        Insere um texto no elemento
-        """
-        if self.rawElement:
-            self.rawElement.text = text
-        return self
-
-    def press(self):
-        """
-        Pressiona o elemento, se for um botão
-        """
-        if self.rawElement:
-            self.rawElement.press()
-        return self
-    
-    def select(self):
-        """
-        Seleciona o elemento ou aba
-        """
-        if self.rawElement:
-            self.rawElement.select()
-        return self
-    
-    def close(self):
-        """
-        Seleciona o elemento ou aba
-        """
-        if self.rawElement:
-            self.rawElement.close()
-        return self
-
-    def setVScrollPosition(self, pos:int):
-        """
-        Configura uma nova posição para uma ScrollBar Vertical
-        """
-        if self.rawElement:
-            self.rawElement.verticalScrollbar.position = pos
-        return self
-
-def getElement(session, elementId: str):
+def start_transaction_new_window(session: win32com.client.CDispatch, transaction: str):
     """
-    Busca um elemento na transação atual e retorna um objeto Element
+    Inicia uma transação com a função /o
+
     Args:
-        session(session): Sessão de referencia retornada pela função connect
-        elementId(str): ID do elemento a ser buscado
-    Retorna:
-        Element: Objeto que encapsula o elemento SAP
+        session(session): Sessão de referencia retornada pela função login ou get_sapgui_session
+        transaction(str): Transação a ser iniciada
     """
-    return Element(session, elementId).find()
+    session.findById("wnd[0]/tbar[0]/okcd").text = f"/o{transaction}"
+    session.findById("wnd[0]").sendVKey(0)
+
+    new_session = get_sapgui_session()
+    return new_session
 
 
-def pressEnter(session):
+T = TypeVar("T", bound="Element")	        
+def get_element(session, elementId: str,  elementType: Type[T] = Element) -> T:
+    """
+    Busca um elemento na transação atual e retorna um objeto do tipo especificado.
+
+    Args:
+        session: Sessão de referência retornada pela função login ou get_sap_session.
+        elementType (Type[T]): Classe do tipo de elemento esperado (ex: GridView, TableControl).
+        elementId (str): ID do elemento a ser buscado.
+
+    Returns:
+        T: Instância do tipo solicitado (por padrão, um Element).
+    """
+    el = elementType(session, elementId) # Usa o construtor do tipo passado
+    return cast(T, el)
+
+
+def pressEnter(session, wndIndex=0):
     """
     Pressiona a tecla ENTER dentro de uma transação no SAP GUI
     Args:
         session(session): Sessão de referencia retornada pela função connect
     """
-    session.findById("wnd[0]").sendVKey(0)
+    session.findById(f"wnd[{wndIndex}]").sendVKey(0)
     return
 
 
@@ -161,7 +122,7 @@ def executeTransaction(session):
     Args:
         session(session): Sessão de referencia retornada pela função connect
     """
-    session.findById("wnd[0]/tbar[1]/btn[8]").press()
+    session.findById("wnd[0]").sendVKey(8)
     return
 
 
@@ -173,3 +134,46 @@ def turnBack(session):
     """
     session.findById("wnd[0]/tbar[0]/btn[3]").press()
     return
+
+
+
+
+    # def press(self):
+    #     """
+    #     Pressiona o elemento, se for um botão
+    #     """
+    #     if self.rawElement:
+    #         self.rawElement.press()
+    #     return self
+    
+    # def select(self):
+    #     """
+    #     Seleciona o elemento ou aba
+    #     """
+    #     if self.rawElement:
+    #         self.rawElement.select()
+    #     return self
+    
+    # def close(self):
+    #     """
+    #     Fecha o elemento ou aba
+    #     """
+    #     if self.rawElement:
+    #         self.rawElement.close()
+    #     return self
+
+    # def setVScrollPosition(self, pos:int):
+    #     """
+    #     Configura uma nova posição para uma ScrollBar vertical
+    #     """
+    #     if self.rawElement:
+    #         self.rawElement.verticalScrollbar.position = pos
+    #     return self
+    
+    # def setHScrollPosition(self, pos:int):
+    #     """
+    #     Configura uma nova posição para uma ScrollBar horizontal
+    #     """
+    #     if self.rawElement:
+    #         self.rawElement.horizontalScrollbar.position = pos
+    #     return self

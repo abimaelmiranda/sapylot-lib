@@ -4,6 +4,7 @@ env/
 venv/
 ENV/
 
+
 # Arquivos de compilação e cache do Python
 __pycache__/
 *.py[cod]
@@ -39,3 +40,4 @@ poetry.lock
 *.env
 
 teste.py
+*.vbs
