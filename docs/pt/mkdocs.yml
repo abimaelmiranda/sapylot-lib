@@ -1,0 +1,47 @@
+site_name: SAPylot
+site_description: Uma biblioteca para acelerar automações do SAP GUI
+repo_url: https://github.com/abimaelmiranda/sapylot-lib
+repo_name: sapylot-lib
+theme:
+  name: material
+  features:
+    - navigation.search 
+    - content.code.copy
+    - navigation.footer
+  palette:
+    - scheme: default
+      primary: light blue
+      toggle:
+        icon: material/weather-night
+        name: Modo noturno
+    - scheme: slate
+      primary: deep blue
+      toggle:
+        icon: material/weather-sunny
+        name: Modo claro
+
+
+markdown_extensions:
+  - pymdownx.emoji
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      linenums: false
+  - pymdownx.blocks.admonition
+  - pymdownx.blocks.details # Escolha um tema que destaque funções
+
+nav:
+  - Home: index.md
+  - Automações do SAP GUI:
+    - Introdução: sapScripting/introduction.md
+    - Ferramenta de gravação de scripts: sapScripting/sap-recording-tool.md
+    - Criando nosso primeiro script: sapScripting/first-script.md
+  - Começando com SAPylot:
+    - Primeiros passos: gettingStarted/first-steps.md
+    - O Básico: gettingStarted/basics.md
+    - Um olhar aprofundado: gettingStarted/deeper-look.md
+  - Documentação de API:
+    - sapylot: api-reference/sapylot.md
+  # - About:
+  #   - About: about/about.md
+  #   - Changelog: about/changelog.md
+  #   - License: about/license.md
