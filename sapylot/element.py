@@ -1,10 +1,21 @@
 import win32com.client
 
-from ..exceptions import ElementNotFoundException
+from .exceptions import ElementNotFoundException
 
 
 class Element:
-    """Classe raiz para todas as outras. Baseada no GuiComponent Object e em GuiVComponent Object"""
+    """
+    Classe raiz para todas as outras. Baseada no GuiComponent Object e em GuiVComponent Object
+
+    Attributes: 
+        session (win32com.client.CDispatch): Sessão do SAP
+        id (str): ID do elemento
+        name (str): Nome interno do elemento
+        parentId (str): ID do elemento pai
+        type (str): Tipo do elemento interno do elemento
+        rawElement (win32com.client.CDispatch): Objeto COM usado para interagir com o SAP
+    
+    """
     def __init__(self, session: win32com.client.CDispatch, elementId: str):
         self.session = session
         self.id = elementId
@@ -31,6 +42,17 @@ class Element:
         """Configura o foco para o elemento atual"""
         self.rawElement.setFocus()
         return
+    
+    def set_text(self, text: str):
+        """
+        Insere um texto no elemento
+
+        Args:
+            text (str): Texto a ser inserido no elemento
+        """
+        if self.rawElement:
+            self.rawElement.text = text
+        return self
 
     def get_text(self):
         """
@@ -39,11 +61,3 @@ class Element:
         if self.rawElement:
             return self.rawElement.text.strip()
         return None
-
-    def set_text(self, text: str):
-        """
-        Insere um texto no elemento
-        """
-        if self.rawElement:
-            self.rawElement.text = text
-        return self

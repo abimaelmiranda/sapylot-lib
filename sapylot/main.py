@@ -1,11 +1,11 @@
 import subprocess
 import time
-from typing import Type, TypeVar, cast
+from typing import Type, TypeVar
 from pywintypes import com_error
 import win32com.client
 import psutil
 
-from .elements import Element
+from .element import Element
 
 
 def get_sapgui_session() -> win32com.client.CDispatch | None:
@@ -23,52 +23,37 @@ def get_sapgui_session() -> win32com.client.CDispatch | None:
             return None
 
 
-def login(ambiente: str, mandante: str, idioma: str, username:str, password: str) -> win32com.client.CDispatch | None:
+def login(ambient: str, client: str, lang: str, username:str, password: str) -> win32com.client.CDispatch | None:
     """
     Inicia o SAP GUI instalado na maquina a partir do caminho padrão 'C:\\Program Files (x86)\\SAP\\FrontEnd\\SAPgui\\sapshcut.exe'
 
     Args:
-        ambiente(str): Ambiente a ser iniciado no SAP GUI
-        mandante(str): Mandante do ambiente
-        idioma(str): Idioma do ambiente
-        username(str): Usuario utilizado para login neste ambiente
-        password(str): Senha utilizada para login neste ambiente
+        ambient: Ambiente a ser iniciado no SAP GUI
+        client: Mandante do ambiente
+        lang: Idioma do ambiente
+        username: Usuario utilizado para login neste ambiente
+        password: Senha utilizada para login neste ambiente
     
-    Retorna:
+    Returns:
         Session: Retorna uma session usada para manipular a interface do SAP Gui.
     """
     APP_PATH = 'C:\\Program Files (x86)\\SAP\\FrontEnd\\SAPgui\\sapshcut.exe'
     
 
-    processo = subprocess.Popen([APP_PATH , f'-system={ambiente}', f'-client={mandante}', f'-user={username}', f'-pw={password}', f'-language={idioma}'])
+    processo = subprocess.Popen([APP_PATH , f'-system={ambient}', f'-client={client}', f'-user={username}', f'-pw={password}', f'-language={lang}'])
     processo.communicate()
 
     time.sleep(5)
     session = get_sapgui_session() 
     return session
 
-
-
-def closeSAPProcess():
-    """
-    Encerra todos os processos do SAP Gui em execução
-    """
-    for proc in psutil.process_iter(['pid', 'name']):
-        try:
-            if 'sapgui.exe' in proc.info['name'].lower() or 'saplogon.exe' in proc.info['name'].lower():
-                print(f"Fechando o processo SAP: {proc.info['name']} (PID: {proc.info['pid']})")
-                proc.terminate() 
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            pass
-
-
 def start_transaction(session: win32com.client.CDispatch, transaction: str):
     """
     Inicia uma transação com a função /n
 
     Args:
-        session(session): Sessão de referencia retornada pela função login ou get_sapgui_session
-        transaction(str): Transação a ser iniciada
+        session: Sessão de referencia retornada pela função login ou get_sapgui_session
+        transaction: Transação a ser iniciada
     """
     session.findById("wnd[0]/tbar[0]/okcd").text = f"/n{transaction}"
     session.findById("wnd[0]").sendVKey(0)
@@ -79,8 +64,8 @@ def start_transaction_new_window(session: win32com.client.CDispatch, transaction
     Inicia uma transação com a função /o
 
     Args:
-        session(session): Sessão de referencia retornada pela função login ou get_sapgui_session
-        transaction(str): Transação a ser iniciada
+        session: Sessão de referencia retornada pela função login ou get_sapgui_session
+        transaction: Transação a ser iniciada
     """
     session.findById("wnd[0]/tbar[0]/okcd").text = f"/o{transaction}"
     session.findById("wnd[0]").sendVKey(0)
@@ -90,47 +75,51 @@ def start_transaction_new_window(session: win32com.client.CDispatch, transaction
 
 
 T = TypeVar("T", bound="Element")	        
-def get_element(session, elementId: str,  elementType: Type[T] = Element) -> T:
+def get_element(session: win32com.client.CDispatch, elementId: str,  elementType: Type[T] = Element) -> T:
     """
     Busca um elemento na transação atual e retorna um objeto do tipo especificado.
 
     Args:
         session: Sessão de referência retornada pela função login ou get_sap_session.
-        elementType (Type[T]): Classe do tipo de elemento esperado (ex: GridView, TableControl).
-        elementId (str): ID do elemento a ser buscado.
+        elementType: Classe do tipo de elemento esperado (ex: GridView, TableControl).
+        elementId: ID do elemento a ser buscado.
 
     Returns:
         T: Instância do tipo solicitado (por padrão, um Element).
     """
-    el = elementType(session, elementId) # Usa o construtor do tipo passado
-    return cast(T, el)
+    el = elementType(session, elementId)
+    return el
 
 
-def pressEnter(session, wndIndex=0):
+def press_enter(session: win32com.client.CDispatch, wndIndex:int=0):
     """
     Pressiona a tecla ENTER dentro de uma transação no SAP GUI
+
     Args:
-        session(session): Sessão de referencia retornada pela função connect
+        session: Sessão de referencia retornada pela função get_sapgui_session
+        wndIndex: Indice da janela a ser pressionada a tecla ENTER
     """
     session.findById(f"wnd[{wndIndex}]").sendVKey(0)
     return
 
 
-def executeTransaction(session):
+def execute_transaction(session: win32com.client.CDispatch):
     """
     Simula o pressionar da tecla F8 (executar) dentro das transações que possuem suporte
+
     Args:
-        session(session): Sessão de referencia retornada pela função connect
+        session: Sessão de referencia retornada pela função get_sapgui_session
     """
     session.findById("wnd[0]").sendVKey(8)
     return
 
 
-def turnBack(session):
+def turn_back(session: win32com.client.CDispatch):
     """
-    Simula o pressionar da tecla F3 (voltar) dentro das transações 
+    Simula o pressionar da tecla F3 (voltar) dentro das transações
+
     Args:
-        session(session): Sessão de referencia retornada pela função connect
+        session: Sessão de referencia retornada pela função get_sapgui_session
     """
     session.findById("wnd[0]/tbar[0]/btn[3]").press()
     return
@@ -162,18 +151,15 @@ def turnBack(session):
     #         self.rawElement.close()
     #     return self
 
-    # def setVScrollPosition(self, pos:int):
-    #     """
-    #     Configura uma nova posição para uma ScrollBar vertical
-    #     """
-    #     if self.rawElement:
-    #         self.rawElement.verticalScrollbar.position = pos
-    #     return self
-    
-    # def setHScrollPosition(self, pos:int):
-    #     """
-    #     Configura uma nova posição para uma ScrollBar horizontal
-    #     """
-    #     if self.rawElement:
-    #         self.rawElement.horizontalScrollbar.position = pos
-    #     return self
+
+def close_sap_process():
+    """
+    Encerra todos os processos do SAP Gui em execução
+    """
+    for proc in psutil.process_iter(['pid', 'name']):
+        try:
+            if 'sapgui.exe' in proc.info['name'].lower() or 'saplogon.exe' in proc.info['name'].lower():
+                print(f"Fechando o processo SAP: {proc.info['name']} (PID: {proc.info['pid']})")
+                proc.terminate() 
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass

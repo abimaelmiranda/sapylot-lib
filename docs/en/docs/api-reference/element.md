@@ -1,6 +1,4 @@
 # Referência da API - Sapylot
 
 ## Classe `Element`
-::: sapylot.get_element
-
-
+::: sapylot.Element

@@ -39,5 +39,6 @@ poetry.lock
 # Outros arquivos desnecessários (configuração específica do projeto)
 *.env
 
+sap_auto.py
 teste.py
 *.vbs

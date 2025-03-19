@@ -1,4 +1,3 @@
-
 # Criando nosso primeiro script
 
 ---
@@ -29,5 +28,3 @@ Lembrando que o .VBS é apenas uma base. Em nosso exemplo usaremos python. Por e
 ```{.bash }
 pip install pywin32
 ```
-
-Isso nos permitirá criar uma conexão com o SAP GUI e executar comandos.

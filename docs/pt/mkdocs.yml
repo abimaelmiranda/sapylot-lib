@@ -4,6 +4,7 @@ repo_url: https://github.com/abimaelmiranda/sapylot-lib
 repo_name: sapylot-lib
 theme:
   name: material
+  language: pt-BR
   features:
     - navigation.search 
     - content.code.copy
@@ -20,28 +21,47 @@ theme:
         icon: material/weather-sunny
         name: Modo claro
 
-
 markdown_extensions:
   - pymdownx.emoji
   - pymdownx.superfences
   - pymdownx.highlight:
       linenums: false
   - pymdownx.blocks.admonition
-  - pymdownx.blocks.details # Escolha um tema que destaque funções
+  - pymdownx.blocks.details
 
 nav:
   - Home: index.md
   - Automações do SAP GUI:
-    - Introdução: sapScripting/introduction.md
-    - Ferramenta de gravação de scripts: sapScripting/sap-recording-tool.md
-    - Criando nosso primeiro script: sapScripting/first-script.md
+    - Introdução: sap-scripting/introduction.md
+    - Ferramenta de gravação de scripts: sap-scripting/sap-recording-tool.md
+    - Criando nosso primeiro script: sap-scripting/first-script.md
   - Começando com SAPylot:
-    - Primeiros passos: gettingStarted/first-steps.md
-    - O Básico: gettingStarted/basics.md
-    - Um olhar aprofundado: gettingStarted/deeper-look.md
+    - Primeiros passos: getting-started/first-steps.md
+    - O Básico: getting-started/basics.md
+    - Um olhar aprofundado: getting-started/deeper-look.md
+    - Boas práticas e dicas de uso: getting-started/tips.md
   - Documentação de API:
-    - sapylot: api-reference/sapylot.md
-  # - About:
-  #   - About: about/about.md
-  #   - Changelog: about/changelog.md
-  #   - License: about/license.md
+    - Funções principais: api-reference/main.md  
+    - Element: api-reference/element.md
+    - Table: api-reference/table.md
+    - Table Control: api-reference/table-control.md
+    - Table Shell: api-reference/table-shell.md
+    - Exceptions: api-reference/exceptions.md
+
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [../../]
+          options:
+            show_source: false
+
+extra:
+  altermate:
+    - name: Portuguese
+      link: /
+      lang: pt-BR
+
+    - name: English
+      link: /en/
+      lang: en
